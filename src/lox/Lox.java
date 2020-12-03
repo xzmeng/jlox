@@ -45,13 +45,25 @@ public class Lox {
         for (Token token : tokens) {
             System.out.println(token);
         }
+        Parser parser = new Parser(tokens);
+        Expr expr = parser.parse();
+        String repr = new AstPrinter().print(expr);
+        System.out.println(repr);
     }
 
     static void error(int line_number, String msg) {
-        report(line_number, msg);
+        report(line_number, "", msg);
     }
 
-    static void report(int line_number, String msg) {
-        System.err.println("[line " + line_number + "] Error: " + msg);
+    static void report(int line_number, String where, String msg) {
+        System.err.println(String.format("[line %s] %s: %s", line_number, where, msg));
+    }
+
+    static void error(Token token, String msg) {
+        if (token.type == TokenType.EOF) {
+            report(token.line_number, " at end", msg);
+        } else {
+            report(token.line_number, " at " + token.lexeme, msg);
+        }
     }
 }
