@@ -106,6 +106,7 @@ public class Scanner {
             // new line
             case '\n':
                 line_number++;
+                break;
             default:
                 if (isNumeric(c)) {
                     number();
