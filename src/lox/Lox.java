@@ -9,6 +9,8 @@ import java.util.ArrayList;
 
 public class Lox {
     static boolean hasError = false;
+    static Interpreter interpreter = new Interpreter();
+
     public static void main(String[] args) throws IOException {
         if (args.length == 0) {
             runPrompt();
@@ -49,6 +51,8 @@ public class Lox {
         Expr expr = parser.parse();
         String repr = new AstPrinter().print(expr);
         System.out.println(repr);
+
+        interpreter.interpret(expr);
     }
 
     static void error(int line_number, String msg) {
@@ -56,7 +60,7 @@ public class Lox {
     }
 
     static void report(int line_number, String where, String msg) {
-        System.err.println(String.format("[line %s] %s: %s", line_number, where, msg));
+        System.out.println(String.format("[line %s] %s: %s", line_number, where, msg));
     }
 
     static void error(Token token, String msg) {
@@ -65,5 +69,10 @@ public class Lox {
         } else {
             report(token.line_number, " at " + token.lexeme, msg);
         }
+    }
+
+    static void runtimeError(Token token, String msg) {
+        hasError = true;
+        report(token.line_number, token.lexeme, msg);
     }
 }
