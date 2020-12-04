@@ -1,18 +1,27 @@
 package lox;
 
-public class Interpreter implements Expr.Visitor<Object> {
+import java.util.List;
 
-    public void interpret(Expr expr) {
+public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
+
+    private Environment environment = new Environment();
+
+    public void interpret(List<Stmt> statements) {
         if (Lox.hasError) {
             System.out.println("[interpreter]An error occurred during previous stage.");
             return;
         }
-        try {
-            Object value = evaluate(expr);
-            System.out.println(value);
-        } catch(RuntimeError e) {
-            Lox.runtimeError(e.token, e.toString());
+        for (Stmt stmt : statements) {
+            try {
+                execute(stmt);
+            } catch(RuntimeError e) {
+                Lox.runtimeError(e.token, e.toString());
+            }
         }
+    }
+
+    void execute(Stmt stmt) {
+        stmt.accept(this);
     }
 
     Object evaluate(Expr expr) {
@@ -59,7 +68,7 @@ public class Interpreter implements Expr.Visitor<Object> {
                 if (left instanceof Float && right instanceof Float) {
                     return (float)left + (float)right;
                 } else if (left instanceof String && right instanceof String) {
-                    return (String)left + (String)right;
+                    return left + (String)right;
                 } else {
                     throw new RuntimeError(expr.operator, "Unexpected operands");
                 }
@@ -113,4 +122,52 @@ public class Interpreter implements Expr.Visitor<Object> {
         }
     }
 
+
+    @Override
+    public Void visitExpressionStmt(Stmt.Expression stmt) {
+        evaluate(stmt.expression);
+        return null;
+    }
+
+    @Override
+    public Void visitPrintStmt(Stmt.Print stmt) {
+        Object value = evaluate(stmt.expression);
+        System.out.println(value);
+        return null;
+    }
+
+    @Override
+    public Object visitVariableExpr(Expr.Variable expr) {
+        return environment.get(expr.name);
+    }
+
+    @Override
+    public Void visitVarStmt(Stmt.Var stmt) {
+        Object value = null;
+        if (stmt.initializer != null){
+            value = evaluate(stmt.initializer);
+        }
+        environment.define(stmt.name.lexeme, value);
+        return null;
+    }
+
+    @Override
+    public Object visitAssignExpr(Expr.Assign expr) {
+        Object value = evaluate(expr.value);
+        environment.assign(expr.name, value);
+        return value;
+    }
+
+    @Override
+    public Void visitBlockStmt(Stmt.Block stmt) {
+        try {
+            this.environment = new Environment(environment);
+            for (Stmt statement : stmt.statements) {
+                execute(statement);
+            }
+        } finally{
+            this.environment = this.environment.enclosing;
+        }
+        return null;
+    }
 }

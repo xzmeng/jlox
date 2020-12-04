@@ -25,6 +25,16 @@ public class AstPrinter implements Expr.Visitor<String> {
         return expr.value.toString();
     }
 
+    @Override
+    public String visitVariableExpr(Expr.Variable expr) {
+        return expr.accept(this);
+    }
+
+    @Override
+    public String visitAssignExpr(Expr.Assign expr) {
+        return expr.accept(this);
+    }
+
     public String print(Expr expr) {
         if (Lox.hasError) return "An error occured during parse. Cannot print the expression.";
         return expr.accept(this);

@@ -1,9 +1,11 @@
 package lox;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Parser {
-    static class ParseException extends RuntimeException{ }
+    static class ParseException extends RuntimeException {
+    }
 
     List<Token> tokens;
     int current = 0;
@@ -12,13 +14,83 @@ public class Parser {
         this.tokens = tokens;
     }
 
-    Expr parse() {
+    List<Stmt> parse() {
+        List<Stmt> statements = new ArrayList<>();
         try {
-            return equality();
+            while (!isAtEnd() && peek().type != TokenType.EOF) {
+                statements.add(declaration());
+            }
         } catch(ParseException e) {
             Lox.hasError = true;
-            return null;
         }
+        return statements;
+    }
+
+    Stmt declaration() {
+        if (match(TokenType.VAR)) {
+            return varDecl();
+        }
+        return statement();
+    }
+
+    Stmt varDecl() {
+        Token name = consume(TokenType.IDENTIFIER, "Expected IDENTIFIER.");
+        Expr initializer = null;
+        if (match(TokenType.EQUAL)) {
+            initializer = expression();
+        }
+        consume(TokenType.SEMICOLON, "Expected SEMICOLON.");
+        return new Stmt.Var(name, initializer);
+    }
+
+    Stmt statement() {
+        if (match(TokenType.PRINT)) {
+            return printStatement();
+        }
+        if (match(TokenType.LEFT_BRACE)) {
+            return new Stmt.Block(block());
+        }
+        return expressionStatement();
+    }
+
+    List<Stmt> block() {
+        List<Stmt> statements = new ArrayList<>();
+        while (!isAtEnd() && !check(TokenType.RIGHT_BRACE)) {
+            statements.add(declaration());
+        }
+        consume(TokenType.RIGHT_BRACE, "Expected '}'.");
+        return statements;
+    }
+
+    Stmt printStatement() {
+        Expr expr = expression();
+        consume(TokenType.SEMICOLON, "Expected ';'");
+        return new Stmt.Print(expr);
+    }
+
+    Stmt expressionStatement() {
+        Expr expr = expression();
+        consume(TokenType.SEMICOLON, "Expected ';'");
+        return new Stmt.Expression(expr);
+    }
+
+    Expr expression() {
+        return assignment();
+    }
+
+    Expr assignment() {
+        Expr expr = equality();
+        if (match(TokenType.EQUAL)) {
+            Token equals = previous();
+            Expr right = assignment();
+            if (expr instanceof Expr.Variable) {
+                Token name = ((Expr.Variable)expr).name;
+                return new Expr.Assign(name, right);
+            }
+
+            throw new RuntimeError(equals, "Left value is not variable");
+        }
+        return expr;
     }
 
     Expr equality() {
@@ -80,11 +152,12 @@ public class Parser {
         if (match(TokenType.NIL)) return new Expr.Literal(null);
         if (match(TokenType.LEFT_PAREN)) {
             Expr expr = equality();
-            consume(TokenType.RIGHT_PAREN);
+            consume(TokenType.RIGHT_PAREN, "Expected ')'");
             return expr;
         }
+        if (match(TokenType.IDENTIFIER)) return new Expr.Variable(previous());
 
-        throw error(peek(), "Unkown token for primary.");
+        throw error(peek(), "Unknown token for primary.");
     }
 
     boolean match(TokenType... types) {
@@ -114,15 +187,16 @@ public class Parser {
         return tokens.get(current - 1);
     }
 
-    void advance() {
+    Token advance() {
         current++;
+        return tokens.get(current - 1);
     }
 
-    void consume(TokenType type) {
+    Token consume(TokenType type, String msg) {
         if (check(type)) {
-            advance();
+            return advance();
         } else {
-            throw error(peek(), "Unexpected token.");
+            throw error(peek(), msg);
         }
     }
 

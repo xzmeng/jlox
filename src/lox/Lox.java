@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.List;
 
 public class Lox {
     static boolean hasError = false;
@@ -44,15 +45,11 @@ public class Lox {
     public static void run(String source) {
         Scanner scanner = new Scanner(source);
         ArrayList<Token> tokens = scanner.scanTokens();
-        for (Token token : tokens) {
-            System.out.println(token);
-        }
-        Parser parser = new Parser(tokens);
-        Expr expr = parser.parse();
-        String repr = new AstPrinter().print(expr);
-        System.out.println(repr);
 
-        interpreter.interpret(expr);
+        Parser parser = new Parser(tokens);
+        List<Stmt> statements = parser.parse();
+
+        interpreter.interpret(statements);
     }
 
     static void error(int line_number, String msg) {
@@ -60,7 +57,7 @@ public class Lox {
     }
 
     static void report(int line_number, String where, String msg) {
-        System.out.println(String.format("[line %s] %s: %s", line_number, where, msg));
+        System.out.printf("[line %s] %s: %s%n", line_number, where, msg);
     }
 
     static void error(Token token, String msg) {
