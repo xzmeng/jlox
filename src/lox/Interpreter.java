@@ -91,7 +91,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             }
             case BANG -> {
                 if (value instanceof Boolean) {
-                    return value;
+                    return !(Boolean)value;
                 } else {
                     return value == null;
                 }
@@ -167,6 +167,44 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             }
         } finally{
             this.environment = this.environment.enclosing;
+        }
+        return null;
+    }
+
+    @Override
+    public Void visitIfStmt(Stmt.If stmt) {
+        Object condition = evaluate(stmt.condition);
+        if (isTruthy(condition)) {
+            execute(stmt.thenBranch);
+        } else if (stmt.elseBranch != null){
+            execute(stmt.elseBranch);
+        }
+        return null;
+    }
+
+    @Override
+    public Object visitLogicalExpr(Expr.Logical expr) {
+        Object left = evaluate(expr.left);
+        if (expr.operator.type == TokenType.OR) {
+            if (isTruthy(left)) return left;
+        } else {
+            if (!isTruthy(left)) return left;
+        }
+        return evaluate(expr.right);
+    }
+
+    Boolean isTruthy(Object value) {
+        if (value instanceof Boolean) {
+            return (Boolean)value;
+        } else {
+            return value != null;
+        }
+    }
+
+    @Override
+    public Void visitWhileStmt(Stmt.While stmt) {
+        while (isTruthy(evaluate(stmt.condition))) {
+            execute(stmt.body);
         }
         return null;
     }

@@ -90,7 +90,7 @@ public class Scanner {
             case '/':
                 if (match('/')) {
                     // eliminate comments
-                    while (peek() != '\n') advance();
+                    while (peek() != '\n' && !isAtEnd()) advance();
                 } else {
                     addToken(TokenType.SLASH);
                 }

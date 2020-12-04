@@ -1,6 +1,7 @@
 package lox;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Parser {
@@ -50,7 +51,77 @@ public class Parser {
         if (match(TokenType.LEFT_BRACE)) {
             return new Stmt.Block(block());
         }
+        if (match(TokenType.IF)) {
+            return ifStatement();
+        }
+        if (match(TokenType.WHILE)) {
+            return whileStatement();
+        }
+        if (match(TokenType.FOR)) {
+            return forStatement();
+        }
         return expressionStatement();
+    }
+
+    Stmt ifStatement() {
+        consume(TokenType.LEFT_PAREN, "Expected '('");
+        Expr condition = expression();
+        consume(TokenType.RIGHT_PAREN, "Expected ')");
+        Stmt thenBranch = statement();
+        Stmt elseBranch = null;
+        if (match(TokenType.ELSE)) {
+            elseBranch = statement();
+        }
+        return new Stmt.If(condition, thenBranch, elseBranch);
+    }
+
+    Stmt whileStatement() {
+        consume(TokenType.LEFT_PAREN, "Expected '('.");
+        Expr condition = expression();
+        consume(TokenType.RIGHT_PAREN, "Expected ')'.");
+        Stmt body = statement();
+        return new Stmt.While(condition, body);
+    }
+
+    Stmt forStatement() {
+        consume(TokenType.LEFT_PAREN, "Expected '('.");
+        Stmt initializer;
+        if (match(TokenType.SEMICOLON)) {
+            initializer = null;
+        } else if (match(TokenType.VAR)) {
+            initializer = varDecl();
+        } else {
+            initializer = expressionStatement();
+        }
+
+        Expr condition;
+        if (match(TokenType.SEMICOLON)) {
+            condition = new Expr.Literal("true");
+        } else {
+            condition = expression();
+            consume(TokenType.SEMICOLON, "Expected ';'.");
+        }
+
+        Expr increment;
+        if (check(TokenType.RIGHT_PAREN)) {
+            increment = null;
+        } else {
+            increment = expression();
+        }
+        consume(TokenType.RIGHT_PAREN, "Expected ')'.");
+
+        Stmt body = statement();
+        if (increment != null) {
+            Stmt incrementStmt = new Stmt.Expression(increment);
+            body = new Stmt.Block(Arrays.asList(body, incrementStmt));
+        }
+        Stmt whileLoop = new Stmt.While(condition, body);
+
+        if (initializer != null) {
+            return new Stmt.Block(Arrays.asList(initializer, whileLoop));
+        } else {
+            return whileLoop;
+        }
     }
 
     List<Stmt> block() {
@@ -79,16 +150,36 @@ public class Parser {
     }
 
     Expr assignment() {
-        Expr expr = equality();
+        Expr expr = or();
         if (match(TokenType.EQUAL)) {
             Token equals = previous();
-            Expr right = assignment();
+            Expr right = or();
             if (expr instanceof Expr.Variable) {
                 Token name = ((Expr.Variable)expr).name;
                 return new Expr.Assign(name, right);
             }
 
             throw new RuntimeError(equals, "Left value is not variable");
+        }
+        return expr;
+    }
+
+    Expr or() {
+        Expr expr = and();
+        while (match(TokenType.OR)) {
+            Token operator = previous();
+            Expr right = and();
+            expr = new Expr.Logical(expr, operator, right);
+        }
+        return expr;
+    }
+
+    Expr and() {
+        Expr expr = equality();
+        while (match(TokenType.AND)) {
+            Token operator = previous();
+            Expr right = equality();
+            expr = new Expr.Logical(expr, operator, right);
         }
         return expr;
     }
