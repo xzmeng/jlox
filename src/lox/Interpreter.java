@@ -1,10 +1,31 @@
 package lox;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
-    private Environment environment = new Environment();
+    final Environment globals = new Environment();
+    private Environment environment = globals;
+
+    Interpreter() {
+        environment.define("clock", new LoxCallable(){
+            @Override
+            public Object call(Interpreter interpreter, List<Object> arguments) {
+                return System.currentTimeMillis() / 1000.0;
+            }
+
+            @Override
+            public int arity() {
+                return 0;
+            }
+
+            @Override
+            public String toString() {
+                return "<native fn>";
+            }
+        });
+    }
 
     public void interpret(List<Stmt> statements) {
         if (Lox.hasError) {
@@ -42,31 +63,31 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             }
             case GREATER -> {
                 checkNumberOperands(expr.operator, left, right);
-                return (float)left > (float)right;
+                return (double)left > (double)right;
             }
             case GREATER_EQUAL -> {
                 checkNumberOperands(expr.operator, left, right);
-                return (float)left >= (float)right;
+                return (double)left >= (double)right;
             }
             case LESS -> {
                 checkNumberOperands(expr.operator, left, right);
-                return (float)left < (float)right;
+                return (double)left < (double)right;
             }
             case LESS_EQUAL -> {
                 checkNumberOperands(expr.operator, left, right);
-                return (float)left <= (float)right;
+                return (double)left <= (double)right;
             }
             case STAR -> {
                 checkNumberOperands(expr.operator, left, right);
-                return (float)left * (float)right;
+                return (double)left * (double)right;
             }
             case SLASH -> {
                 checkNumberOperands(expr.operator, left, right);
-                return (float)left / (float)right;
+                return (double)left / (double)right;
             }
             case PLUS -> {
-                if (left instanceof Float && right instanceof Float) {
-                    return (float)left + (float)right;
+                if (left instanceof Double && right instanceof Double) {
+                    return (double)left + (double)right;
                 } else if (left instanceof String && right instanceof String) {
                     return left + (String)right;
                 } else {
@@ -75,7 +96,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             }
             case MINUS -> {
                 checkNumberOperands(expr.operator, left, right);
-                return (float)left - (float)right;
+                return (double)left - (double)right;
             }
         }
         throw new RuntimeError(expr.operator, "Unknown operation.");
@@ -87,7 +108,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         switch (expr.operator.type) {
             case MINUS -> {
                 checkNumberOperand(expr.operator, value);
-                return -(float) value;
+                return -(double) value;
             }
             case BANG -> {
                 if (value instanceof Boolean) {
@@ -111,13 +132,13 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     void checkNumberOperand(Token operator, Object value) {
-        if (!(value instanceof Float)) {
+        if (!(value instanceof Double)) {
             throw new RuntimeError(operator, "Number expected.");
         }
     }
 
     void checkNumberOperands(Token operator, Object left, Object right) {
-        if (!(left instanceof Float) || !(right instanceof Float)) {
+        if (!(left instanceof Double) || !(right instanceof Double)) {
             throw new RuntimeError(operator, "Number expected.");
         }
     }
@@ -160,14 +181,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitBlockStmt(Stmt.Block stmt) {
-        try {
-            this.environment = new Environment(environment);
-            for (Stmt statement : stmt.statements) {
-                execute(statement);
-            }
-        } finally{
-            this.environment = this.environment.enclosing;
-        }
+        executeBlock(stmt.statements, new Environment(environment));
         return null;
     }
 
@@ -180,6 +194,19 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             execute(stmt.elseBranch);
         }
         return null;
+    }
+
+    void executeBlock(List<Stmt> statements, Environment environment) {
+        Environment previous = this.environment;
+        try {
+            this.environment = environment;
+
+            for (Stmt statement : statements) {
+                execute(statement);
+            }
+        } finally {
+            this.environment = previous;
+        }
     }
 
     @Override
@@ -206,6 +233,41 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         while (isTruthy(evaluate(stmt.condition))) {
             execute(stmt.body);
         }
+        return null;
+    }
+
+    @Override
+    public Object visitCallExpr(Expr.Call expr) {
+        Object callee = evaluate(expr.callee);
+        List<Object> arguments = new ArrayList<>();
+        for (Expr argument : expr.arguments) {
+            arguments.add(evaluate(argument));
+        }
+
+        if (!(callee instanceof LoxCallable)) {
+            throw new RuntimeError(expr.paren, "Can only call functions and classes");
+        }
+
+        LoxCallable function = (LoxCallable)callee;
+        if (function.arity() != arguments.size()) {
+            throw new RuntimeError(expr.paren, "Expected " +
+                    function.arity() + " arguments but got " +
+                    arguments.size() + ".");
+        }
+
+        return function.call(this, arguments);
+    }
+
+    @Override
+    public Void visitReturnStmt(Stmt.Return stmt) {
+        Object value = evaluate(stmt.value);
+        throw new Return(value);
+    }
+
+    @Override
+    public Void visitFunctionStmt(Stmt.Function stmt) {
+        LoxFunction function = new LoxFunction(stmt, environment);
+        environment.define(stmt.name.lexeme, function);
         return null;
     }
 }

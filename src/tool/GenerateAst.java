@@ -17,12 +17,15 @@ public class GenerateAst {
                 "Unary      :   Token operator, Expr right",
                 "Grouping   :   Expr expression",
                 "Literal    :   Object value",
-                "Variable   :   Token name"
+                "Variable   :   Token name",
+                "Call       :   Expr callee, Token paren, List<Expr> arguments"
         );
         List<String> stmtTypes = Arrays.asList(
                 "Expression :   Expr expression",
                 "Print      :   Expr expression",
+                "Return     :   Token keyword, Expr value",
                 "Var        :   Token name, Expr initializer",
+                "Function   :   Token name, List<Token> params, List<Stmt> body",
                 "Block      :   List<Stmt> statements",
                 "If         :   Expr condition, Stmt thenBranch, Stmt elseBranch",
                 "While      :   Expr condition, Stmt body"

@@ -40,6 +40,11 @@ public class AstPrinter implements Expr.Visitor<String> {
         return expr.accept(this);
     }
 
+    @Override
+    public String visitCallExpr(Expr.Call expr) {
+        return expr.accept(this);
+    }
+
     public String print(Expr expr) {
         if (Lox.hasError) return "An error occured during parse. Cannot print the expression.";
         return expr.accept(this);

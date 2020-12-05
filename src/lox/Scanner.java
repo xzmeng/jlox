@@ -165,12 +165,12 @@ public class Scanner {
     private void number() {
         // deal with the integer part
         while (isNumeric(peek())) advance();
-        // deal with the float point part
+        // deal with the double point part
         if (peek() == '.' && isNumeric(peekNext())) {
             advance();
         }
         while (isNumeric(peek())) advance();
-        Float literal = Float.parseFloat(source.substring(start, current));
+        double literal = Double.parseDouble(source.substring(start, current));
         addToken(TokenType.NUMBER, literal);
     }
 

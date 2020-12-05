@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Parser {
+
     static class ParseException extends RuntimeException {
     }
 
@@ -31,7 +32,29 @@ public class Parser {
         if (match(TokenType.VAR)) {
             return varDecl();
         }
+        if (match(TokenType.FUN)) {
+            return function("function");
+        }
         return statement();
+    }
+
+    Stmt function(String kind) {
+        Token name = consume(TokenType.IDENTIFIER, "Expected IDENTIFIER.");
+        consume(TokenType.LEFT_PAREN, "Expected '('.");
+        List<Token> parameters = new ArrayList<>();
+        if (!check(TokenType.RIGHT_PAREN)) {
+            do {
+                if (parameters.size() >= 255) {
+                    error(peek(), "Can't have more than 255 parameters.");
+                }
+                parameters.add(consume(TokenType.IDENTIFIER, "Expect parameter name."));
+            } while (match(TokenType.COMMA));
+        }
+        consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.");
+
+        consume(TokenType.LEFT_BRACE, "Expect '{'");
+        List<Stmt> body = block();
+        return new Stmt.Function(name, parameters, body);
     }
 
     Stmt varDecl() {
@@ -48,6 +71,9 @@ public class Parser {
         if (match(TokenType.PRINT)) {
             return printStatement();
         }
+        if (match(TokenType.RETURN)) {
+            return returnStatement();
+        }
         if (match(TokenType.LEFT_BRACE)) {
             return new Stmt.Block(block());
         }
@@ -61,6 +87,16 @@ public class Parser {
             return forStatement();
         }
         return expressionStatement();
+    }
+
+    Stmt returnStatement() {
+        Token keyword = previous();
+        if (check(TokenType.SEMICOLON)) {
+            Expr value = new Expr.Literal(null);
+        }
+        Expr value = expression();
+        consume(TokenType.SEMICOLON, "Expect ';'.");
+        return new Stmt.Return(keyword, value);
     }
 
     Stmt ifStatement() {
@@ -231,7 +267,33 @@ public class Parser {
             Expr right = unary();
             return new Expr.Unary(operator, right);
         }
-        return primary();
+        return call();
+    }
+
+    Expr call() {
+        Expr expr = primary();
+        while (true) {
+            if (match(TokenType.LEFT_PAREN)) {
+                expr = finishCall(expr);
+            } else {
+                break;
+            }
+        }
+        return expr;
+    }
+
+    Expr finishCall(Expr callee) {
+        List<Expr> arguments = new ArrayList<>();
+        if (!check(TokenType.RIGHT_PAREN)) {
+            do {
+                if (arguments.size() >= 255) {
+                    error(peek(), "Can't have more than 255 arguments.");
+                }
+                arguments.add(expression());
+            } while(match(TokenType.COMMA));
+        }
+        Token paren = consume(TokenType.RIGHT_PAREN, "Expected ')'.");
+        return new Expr.Call(callee, paren, arguments);
     }
 
     Expr primary() {
