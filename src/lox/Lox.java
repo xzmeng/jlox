@@ -3,55 +3,82 @@ package lox;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.util.List;
 
 public class Lox {
-    static boolean hasError = false;
-    public static void main(String[] args) throws IOException {
-        if (args.length == 0) {
-            runPrompt();
-        } else if (args.length == 1) {
-            String filepath = args[0];
-            runFile(filepath);
-        }
-    }
+  private static final Interpreter interpreter = new Interpreter();
+  static boolean hadError = false;
+  static boolean hadRuntimeError = false;
 
-    public static void runPrompt() throws IOException {
-        String line;
-        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-        while (true) {
-            System.out.print("> ");
-            line = reader.readLine();
-            if (line == null) break;
-            run(line);
-            hasError = false;
-        }
+  public static void main(String[] args) throws IOException {
+    if (args.length > 1) {
+      System.out.println("Usage: jlox [script]");
+      System.exit(64); // [64]
+    } else if (args.length == 1) {
+      runFile(args[0]);
+    } else {
+      runPrompt();
     }
+  }
+  private static void runFile(String path) throws IOException {
+    byte[] bytes = Files.readAllBytes(Paths.get(path));
+    run(new String(bytes, Charset.defaultCharset()));
 
-    public static void runFile(String filepath) throws IOException{
-        byte[] bytes = Files.readAllBytes(Paths.get(filepath));
-        String source = new String(bytes);
-        run(source);
-        if (hasError) {
-            System.exit(65);
-        }
-    }
+    // Indicate an error in the exit code.
+    if (hadError) System.exit(65);
+    if (hadRuntimeError) System.exit(70);
+  }
+  private static void runPrompt() throws IOException {
+    InputStreamReader input = new InputStreamReader(System.in);
+    BufferedReader reader = new BufferedReader(input);
 
-    public static void run(String source) {
-        Scanner scanner = new Scanner(source);
-        ArrayList<Token> tokens = scanner.scanTokens();
-        for (Token token : tokens) {
-            System.out.println(token);
-        }
+    for (;;) { // [repl]
+      System.out.print("> ");
+      String line = reader.readLine();
+      if (line == null) break;
+      run(line);
+      hadError = false;
     }
+  }
+  private static void run(String source) {
+    Scanner scanner = new Scanner(source);
+    List<Token> tokens = scanner.scanTokens();
+    Parser parser = new Parser(tokens);
+    List<Stmt> statements = parser.parse();
 
-    static void error(int line_number, String msg) {
-        report(line_number, msg);
-    }
+    // Stop if there was a syntax error.
+    if (hadError) return;
 
-    static void report(int line_number, String msg) {
-        System.err.println("[line " + line_number + "] Error: " + msg);
+    Resolver resolver = new Resolver(interpreter);
+    resolver.resolve(statements);
+
+    // Stop if there was a resolution error.
+    if (hadError) return;
+
+    interpreter.interpret(statements);
+  }
+  static void error(int line, String message) {
+    report(line, "", message);
+  }
+
+  private static void report(int line, String where, String message) {
+    System.err.println(
+        "[line " + line + "] Error" + where + ": " + message);
+    hadError = true;
+  }
+  static void error(Token token, String message) {
+    if (token.type == TokenType.EOF) {
+      report(token.line, " at end", message);
+    } else {
+      report(token.line, " at '" + token.lexeme + "'", message);
     }
+  }
+  static void runtimeError(RuntimeError error) {
+    System.err.println(error.getMessage() +
+        "\n[line " + error.token.line + "]");
+    hadRuntimeError = true;
+  }
 }

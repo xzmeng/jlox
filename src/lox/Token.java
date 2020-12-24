@@ -1,20 +1,24 @@
 package lox;
 
-public class Token {
-    TokenType type; // used for the parser
-    String lexeme;  // the the word from the source code
-    Object literal; // such as integer or string
-    int line_number;
+class Token {
+  final TokenType type;
+  // type of token
+  final String lexeme;
+  // token string
+  final Object literal;
+  //
+  final int line; // [location]
+  // line number
 
-    Token(TokenType type, String lexeme, Object literal, int line_number) {
-        this.type = type;
-        this.lexeme = lexeme;
-        this.literal = literal;
+  // constructor
+  Token(TokenType type, String lexeme, Object literal, int line) {
+    this.type = type;
+    this.lexeme = lexeme;
+    this.literal = literal;
+    this.line = line;
+  }
 
-        this.line_number = line_number;
-    }
-
-    public String toString() {
-        return type + " " + lexeme + " " + literal;
-    }
+  public String toString() {
+    return type + " " + lexeme + " " + literal;
+  }
 }
