@@ -30,7 +30,7 @@ fun fib(n) {
     if (n < 2) return n;
     return fib(n - 2) + fib(n - 1) ;
 }
-// 3 times faster than Python!
+// half slower than Python
 
 // for loop
 for (var i = 0; i < 10; i = i + 1) {
