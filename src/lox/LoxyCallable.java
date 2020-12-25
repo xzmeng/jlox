@@ -2,7 +2,7 @@ package lox;
 
 import java.util.List;
 
-interface LoxCallable {
+interface LoxyCallable {
   int arity();
   Object call(Interpreter interpreter, List<Object> arguments);
 }

@@ -50,7 +50,7 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     if (stmt.superclass != null &&
         stmt.name.lexeme.equals(stmt.superclass.name.lexeme)) {
-      Lox.error(stmt.superclass.name,
+      Loxy.error(stmt.superclass.name,
           "A class cannot inherit from itself.");
     }
 
@@ -112,12 +112,12 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   @Override
   public Void visitReturnStmt(Stmt.Return stmt) {
     if (currentFunction == FunctionType.NONE) {
-      Lox.error(stmt.keyword, "Cannot return from top-level code.");
+      Loxy.error(stmt.keyword, "Cannot return from top-level code.");
     }
 
     if (stmt.value != null) {
       if (currentFunction == FunctionType.INITIALIZER) {
-        Lox.error(stmt.keyword,
+        Loxy.error(stmt.keyword,
             "Cannot return a value from an initializer.");
       }
 
@@ -194,10 +194,10 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   @Override
   public Void visitSuperExpr(Expr.Super expr) {
     if (currentClass == ClassType.NONE) {
-      Lox.error(expr.keyword,
+      Loxy.error(expr.keyword,
           "Cannot use 'super' outside of a class.");
     } else if (currentClass != ClassType.SUBCLASS) {
-      Lox.error(expr.keyword,
+      Loxy.error(expr.keyword,
           "Cannot use 'super' in a class with no superclass.");
     }
 
@@ -207,7 +207,7 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   @Override
   public Void visitThisExpr(Expr.This expr) {
     if (currentClass == ClassType.NONE) {
-      Lox.error(expr.keyword,
+      Loxy.error(expr.keyword,
           "Cannot use 'this' outside of a class.");
       return null;
     }
@@ -225,7 +225,7 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   public Void visitVariableExpr(Expr.Variable expr) {
     if (!scopes.isEmpty() &&
         scopes.peek().get(expr.name.lexeme) == Boolean.FALSE) {
-      Lox.error(expr.name,
+      Loxy.error(expr.name,
           "Cannot read local variable in its own initializer.");
     }
 
@@ -263,7 +263,7 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     Map<String, Boolean> scope = scopes.peek();
     if (scope.containsKey(name.lexeme)) {
-      Lox.error(name,
+      Loxy.error(name,
           "Variable with this name already declared in this scope.");
     }
 

@@ -3,18 +3,18 @@ package lox;
 import java.util.List;
 import java.util.Map;
 
-class LoxClass implements LoxCallable {
+class LoxyClass implements LoxyCallable {
   final String name;
-  final LoxClass superclass;
-  private final Map<String, LoxFunction> methods;
+  final LoxyClass superclass;
+  private final Map<String, LoxyFunction> methods;
 
-  LoxClass(String name, LoxClass superclass,
-           Map<String, LoxFunction> methods) {
+  LoxyClass(String name, LoxyClass superclass,
+            Map<String, LoxyFunction> methods) {
     this.superclass = superclass;
     this.name = name;
     this.methods = methods;
   }
-  LoxFunction findMethod(String name) {
+  LoxyFunction findMethod(String name) {
     if (methods.containsKey(name)) {
       return methods.get(name);
     }
@@ -32,8 +32,8 @@ class LoxClass implements LoxCallable {
   }
   @Override
   public Object call(Interpreter interpreter, List<Object> arguments) {
-    LoxInstance instance = new LoxInstance(this);
-    LoxFunction initializer = findMethod("init");
+    LoxyInstance instance = new LoxyInstance(this);
+    LoxyFunction initializer = findMethod("init");
     if (initializer != null) {
       initializer.bind(instance).call(interpreter, arguments);
     }
@@ -43,7 +43,7 @@ class LoxClass implements LoxCallable {
 
   @Override
   public int arity() {
-    LoxFunction initializer = findMethod("init");
+    LoxyFunction initializer = findMethod("init");
     if (initializer == null) return 0;
     return initializer.arity();
   }

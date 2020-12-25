@@ -19,7 +19,7 @@ class Scanner {
     keywords.put("else",   ELSE);
     keywords.put("false",  FALSE);
     keywords.put("for",    FOR);
-    keywords.put("fun",    FUN);
+    keywords.put("def", DEF);
     keywords.put("if",     IF);
     keywords.put("nil",    NIL);
     keywords.put("or",     OR);
@@ -95,7 +95,7 @@ class Scanner {
         } else if (isAlpha(c)) {
           identifier();
         } else {
-          Lox.error(line, "Unexpected character.");
+          Loxy.error(line, "Unexpected character.");
         }
         break;
     }
@@ -129,7 +129,7 @@ class Scanner {
     }
 
     if (isAtEnd()) {
-      Lox.error(line, "Unterminated string.");
+      Loxy.error(line, "Unterminated string.");
       return;
     }
 

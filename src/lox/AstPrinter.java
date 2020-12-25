@@ -1,5 +1,7 @@
 package lox;
 
+import java.util.List;
+
 // Creates an unambiguous, if ugly, string representation of AST nodes.
 class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
   String print(Expr expr) {
@@ -20,6 +22,12 @@ class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
 
     builder.append(")");
     return builder.toString();
+  }
+
+  public void print(List<Stmt> statements) {
+    for (Stmt statement :statements) {
+      System.out.println(print(statement));
+    }
   }
 
   @Override

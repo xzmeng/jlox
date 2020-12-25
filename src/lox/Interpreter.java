@@ -11,7 +11,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
   private final Map<Expr, Integer> locals = new HashMap<>();
 
   Interpreter() {
-    globals.define("clock", new LoxCallable() {
+    globals.define("clock", new LoxyCallable() {
       @Override
       public int arity() { return 0; }
 
@@ -32,7 +32,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         execute(statement);
       }
     } catch (RuntimeError error) {
-      Lox.runtimeError(error);
+      Loxy.runtimeError(error);
     }
   }
   private Object evaluate(Expr expr) {
@@ -66,7 +66,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     Object superclass = null;
     if (stmt.superclass != null) {
       superclass = evaluate(stmt.superclass);
-      if (!(superclass instanceof LoxClass)) {
+      if (!(superclass instanceof LoxyClass)) {
         throw new RuntimeError(stmt.superclass.name,
             "Superclass must be a class.");
       }
@@ -79,15 +79,15 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
       environment.define("super", superclass);
     }
 
-    Map<String, LoxFunction> methods = new HashMap<>();
+    Map<String, LoxyFunction> methods = new HashMap<>();
     for (Stmt.Function method : stmt.methods) {
-      LoxFunction function = new LoxFunction(method, environment,
+      LoxyFunction function = new LoxyFunction(method, environment,
           method.name.lexeme.equals("init"));
       methods.put(method.name.lexeme, function);
     }
 
-    LoxClass klass = new LoxClass(stmt.name.lexeme,
-        (LoxClass)superclass, methods);
+    LoxyClass klass = new LoxyClass(stmt.name.lexeme,
+        (LoxyClass)superclass, methods);
 
     if (superclass != null) {
       environment = environment.enclosing;
@@ -103,7 +103,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
   }
   @Override
   public Void visitFunctionStmt(Stmt.Function stmt) {
-    LoxFunction function = new LoxFunction(stmt, environment, false);
+    LoxyFunction function = new LoxyFunction(stmt, environment, false);
     environment.define(stmt.name.lexeme, function);
     return null;
   }
@@ -213,12 +213,12 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
       arguments.add(evaluate(argument));
     }
 
-    if (!(callee instanceof LoxCallable)) {
+    if (!(callee instanceof LoxyCallable)) {
       throw new RuntimeError(expr.paren,
           "Can only call functions and classes.");
     }
 
-    LoxCallable function = (LoxCallable)callee;
+    LoxyCallable function = (LoxyCallable)callee;
     if (arguments.size() != function.arity()) {
       throw new RuntimeError(expr.paren, "Expected " +
           function.arity() + " arguments but got " +
@@ -230,8 +230,8 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
   @Override
   public Object visitGetExpr(Expr.Get expr) {
     Object object = evaluate(expr.object);
-    if (object instanceof LoxInstance) {
-      return ((LoxInstance) object).get(expr.name);
+    if (object instanceof LoxyInstance) {
+      return ((LoxyInstance) object).get(expr.name);
     }
 
     throw new RuntimeError(expr.name,
@@ -261,25 +261,25 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
   public Object visitSetExpr(Expr.Set expr) {
     Object object = evaluate(expr.object);
 
-    if (!(object instanceof LoxInstance)) { // [order]
+    if (!(object instanceof LoxyInstance)) { // [order]
       throw new RuntimeError(expr.name, "Only instances have fields.");
     }
 
     Object value = evaluate(expr.value);
-    ((LoxInstance)object).set(expr.name, value);
+    ((LoxyInstance)object).set(expr.name, value);
     return value;
   }
   @Override
   public Object visitSuperExpr(Expr.Super expr) {
     int distance = locals.get(expr);
-    LoxClass superclass = (LoxClass)environment.getAt(
+    LoxyClass superclass = (LoxyClass)environment.getAt(
         distance, "super");
 
     // "this" is always one level nearer than "super"'s environment.
-    LoxInstance object = (LoxInstance)environment.getAt(
+    LoxyInstance object = (LoxyInstance)environment.getAt(
         distance - 1, "this");
 
-    LoxFunction method = superclass.findMethod(expr.method.lexeme);
+    LoxyFunction method = superclass.findMethod(expr.method.lexeme);
 
     if (method == null) {
       throw new RuntimeError(expr.method,

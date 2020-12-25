@@ -21,7 +21,7 @@ enum TokenType {
   // he_12a    hello   123
 
   // Keywords.
-  AND, CLASS, ELSE, FALSE, FUN, FOR, IF, NIL, OR,
+  AND, CLASS, ELSE, FALSE, DEF, FOR, IF, NIL, OR,
   // and class  else  false fun  for if  nil   or
   PRINT, RETURN, SUPER, THIS, TRUE, VAR, WHILE,
   // print  return  super  this true var while

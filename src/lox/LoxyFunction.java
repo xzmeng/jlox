@@ -2,21 +2,21 @@ package lox;
 
 import java.util.List;
 
-class LoxFunction implements LoxCallable {
+class LoxyFunction implements LoxyCallable {
   private final Stmt.Function declaration;
   private final Environment closure;
   private final boolean isInitializer;
 
-  LoxFunction(Stmt.Function declaration, Environment closure,
-              boolean isInitializer) {
+  LoxyFunction(Stmt.Function declaration, Environment closure,
+               boolean isInitializer) {
     this.isInitializer = isInitializer;
     this.closure = closure;
     this.declaration = declaration;
   }
-  LoxFunction bind(LoxInstance instance) {
+  LoxyFunction bind(LoxyInstance instance) {
     Environment environment = new Environment(closure);
     environment.define("this", instance);
-    return new LoxFunction(declaration, environment, isInitializer);
+    return new LoxyFunction(declaration, environment, isInitializer);
   }
   @Override
   public String toString() {
