@@ -2,12 +2,12 @@ package lox;
 
 import java.util.List;
 
-public class LoxFunction implements LoxCallable {
+public class LoxyFunction implements LoxyCallable {
 
     private final Stmt.Function declaration;
     private final Environment closure;
 
-    LoxFunction(Stmt.Function declaration, Environment closure) {
+    LoxyFunction(Stmt.Function declaration, Environment closure) {
         this.declaration = declaration;
         this.closure = closure;
     }

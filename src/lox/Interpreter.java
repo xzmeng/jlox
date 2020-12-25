@@ -12,7 +12,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     private final Map<Expr, Integer> locals = new HashMap<>();
 
     Interpreter() {
-        environment.define("clock", new LoxCallable(){
+        environment.define("clock", new LoxyCallable(){
             @Override
             public Object call(Interpreter interpreter, List<Object> arguments) {
                 return System.currentTimeMillis() / 1000.0;
@@ -35,7 +35,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     public void interpret(List<Stmt> statements) {
-        if (Lox.hasError) {
+        if (Loxy.hasError) {
             System.out.println("[interpreter]An error occurred during previous stage.");
             return;
         }
@@ -43,7 +43,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             try {
                 execute(stmt);
             } catch(RuntimeError e) {
-                Lox.runtimeError(e.token, e.toString());
+                Loxy.runtimeError(e.token, e.toString());
             }
         }
     }
@@ -265,11 +265,11 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             arguments.add(evaluate(argument));
         }
 
-        if (!(callee instanceof LoxCallable)) {
+        if (!(callee instanceof LoxyCallable)) {
             throw new RuntimeError(expr.paren, "Can only call functions and classes");
         }
 
-        LoxCallable function = (LoxCallable)callee;
+        LoxyCallable function = (LoxyCallable)callee;
         if (function.arity() != arguments.size()) {
             throw new RuntimeError(expr.paren, "Expected " +
                     function.arity() + " arguments but got " +
@@ -287,7 +287,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitFunctionStmt(Stmt.Function stmt) {
-        LoxFunction function = new LoxFunction(stmt, environment);
+        LoxyFunction function = new LoxyFunction(stmt, environment);
         environment.define(stmt.name.lexeme, function);
         return null;
     }

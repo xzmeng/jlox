@@ -113,8 +113,8 @@ public class Scanner {
                 } else if (isAlphabetUnderscore(c)) {
                     identifier();
                 } else {
-                    Lox.hasError = true;
-                    Lox.error(line_number, "Unexpected character.");
+                    Loxy.hasError = true;
+                    Loxy.error(line_number, "Unexpected character.");
                 }
         }
     }
@@ -184,8 +184,8 @@ public class Scanner {
     private void string() {
         while (peek() != '"' && !isAtEnd()) advance();
         if (isAtEnd()) {
-            Lox.hasError = true;
-            Lox.error(line_number, "Unterminated string.");
+            Loxy.hasError = true;
+            Loxy.error(line_number, "Unterminated string.");
             return;
         }
         advance(); // consume the right quote

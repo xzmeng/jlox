@@ -23,7 +23,7 @@ public class Parser {
                 statements.add(declaration());
             }
         } catch(ParseException e) {
-            Lox.hasError = true;
+            Loxy.hasError = true;
         }
         return statements;
     }
@@ -354,7 +354,7 @@ public class Parser {
     }
 
     ParseException error(Token token, String msg) {
-        Lox.error(token, msg);
+        Loxy.error(token, msg);
         return new ParseException();
     }
 }

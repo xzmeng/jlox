@@ -8,7 +8,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Lox {
+public class Loxy {
     static boolean hasError = false;
     static Interpreter interpreter = new Interpreter();
 
