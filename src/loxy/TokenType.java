@@ -1,4 +1,4 @@
-package lox;
+package loxy;
 
 public enum TokenType {
     // single-character tokens

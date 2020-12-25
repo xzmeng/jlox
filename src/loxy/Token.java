@@ -1,4 +1,4 @@
-package lox;
+package loxy;
 
 public class Token {
     TokenType type; // used for the parser

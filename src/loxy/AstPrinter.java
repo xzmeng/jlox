@@ -1,4 +1,4 @@
-package lox;
+package loxy;
 
 public class AstPrinter implements Expr.Visitor<String> {
     @Override

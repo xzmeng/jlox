@@ -1,4 +1,4 @@
-package lox;
+package loxy;
 
 public class Return extends RuntimeException{
     final Object value;
